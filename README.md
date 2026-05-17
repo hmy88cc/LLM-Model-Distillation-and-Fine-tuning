@@ -5,9 +5,8 @@
 ## 📋 项目概述
 
 本项目基于Unsloth框架，实现了多种高效的LLM微调方案：
-- **SFT监督微调**：使用Alpaca数据集对Qwen2.5-7B进行指令微调
+- **SFT监督微调**：使用Alpaca数据集对Qwen2.5-7B/Qwen3.5-9B进行指令微调
 - **GRPO强化学习**：使用GSM8K数学数据集训练模型的推理能力
-- **多模态微调**：针对Qwen2-VL视觉语言模型的专项微调
 - **模型评估**：提供完整的模型性能对比评估工具
 
 ## 🚀 快速开始
@@ -151,59 +150,6 @@ pip install -r requirements.txt
 - 首次运行 → 用Lightweight版本验证环境
 - 正式训练 → 用AutoDL版本获得更好效果
 
----
-
-#### 5. qwen_vl_car_insurance_train.py - 视觉语言模型微调
-**功能**: 对Qwen2.5-VL-3B多模态模型进行专项微调
-
-**适用场景**:
-- 图像理解任务 (OCR、物体识别等)
-- 汽车保险领域的里程表识别
-- 需要处理图像+文本的多模态任务
-- 垂直领域视觉问答
-
-**技术特点**:
-- 模型: Qwen2.5-VL-3B-Instruct (视觉语言模型)
-- 数据集: Excel格式 (image, prompt, response)
-- 任务: 车辆里程表读数提取
-- 微调范围:
-  - ✅ 视觉层 (vision layers)
-  - ✅ 语言层 (language layers)
-  - ✅ 注意力模块 (attention modules)
-  - ✅ MLP模块
-- LoRA配置: r=16, alpha=16
-- 训练步数: 30步
-- 显存需求: ~16GB
-
-**输入格式**: 多模态对话
-```json
-{
-  "messages": [
-    {
-      "role": "user",
-      "content": [
-        {"type": "text", "text": "请识别里程表读数"},
-        {"type": "image", "image": "图片对象"}
-      ]
-    },
-    {
-      "role": "assistant",
-      "content": [
-        {"type": "text", "text": "里程表读数: 12345公里"}
-      ]
-    }
-  ]
-}
-```
-
-**与其他脚本的核心区别**:
-- 🖼️ **唯一支持图像输入**的脚本
-- 📊 使用Excel而非JSON/Parquet数据格式
-- 🎯 针对特定垂直领域 (汽车保险)
-- 🔧 同时微调视觉和语言层
-
----
-
 ### 📊 训练脚本对比总结
 
 | 脚本 | 模型 | 训练方法 | 数据类型 | 显存需求 | 适用场景 |
@@ -212,14 +158,12 @@ pip install -r requirements.txt
 | Qwen2_5_(7B)_R1_GRPO.py | Qwen2.5-7B | GRPO | 数学问题 | ~24GB | 推理能力训练 |
 | Qwen3_5_(9B)_GRPO_AutoDL.py | Qwen3.5-9B | GRPO | 数学问题 | ~28GB | AutoDL完整训练 |
 | Qwen3_5_(9B)_GRPO_Lightweight.py | Qwen3.5-9B | GRPO | 数学问题 | ~20GB | 快速验证测试 |
-| qwen_vl_car_insurance_train.py | Qwen2.5-VL-3B | SFT | 图像+文本 | ~16GB | 多模态视觉任务 |
 
 ### 🔍 如何选择训练脚本?
 
 **根据任务类型**:
 - 📝 文本对话/指令遵循 → `Qwen2_5_(7B)_Alpaca.py`
 - 🧮 数学推理/逻辑思维 → `Qwen2_5_(7B)_R1_GRPO.py` 或 Qwen3.5系列
-- 🖼️ 图像理解/OCR → `qwen_vl_car_insurance_train.py`
 
 **根据硬件条件**:
 - 💾 显存 < 20GB → `Qwen3_5_(9B)_GRPO_Lightweight.py`
@@ -236,8 +180,7 @@ pip install -r requirements.txt
 
 ### 内置示例数据
 - `gsm8k_100_samples.json` - GSM8K数学问题示例(100条)
-- `images/` - 车辆里程表示例图片
-
+  
 ### 大型数据集获取
 由于数据集文件较大，建议通过以下方式获取：
 1. 使用提供的`extract_gsm8k_full_samples.py`脚本从原始parquet文件提取
@@ -321,10 +264,8 @@ compare_models(test_cases, model_results, eval_type="medical")
   GRPO强化学习模型: 平均综合评分 = 0.9200
 ```
 
----
-
-#### 2. download_qwen35_4b.py - 模型下载工具
-**功能**: 从ModelScope自动下载Qwen3.5-4B模型到本地
+#### 2. download_qwen35_9b.py - 模型下载工具
+**功能**: 从ModelScope自动下载Qwen3.5-9B模型到本地
 
 **适用场景**:
 - 首次搭建环境时下载预训练模型
@@ -334,14 +275,13 @@ compare_models(test_cases, model_results, eval_type="medical")
 **技术特点**:
 - 目标目录: `/root/autodl-tmp/MODELS/`
 - 下载源: ModelScope (国内镜像，速度快)
-- 备用方案: Git clone方式
 - 自动验证: 检查模型文件完整性
 - 进度显示: 实时下载状态
 
 **使用步骤**:
 ```bash
 # 1. 运行下载脚本
-python download_qwen35_4b.py
+python download_qwen3.5_9b.py
 
 # 2. 等待下载完成（约10-30分钟）
 # 3. 验证模型文件
@@ -352,7 +292,7 @@ python download_qwen35_4b.py
 ```python
 # 在其他训练脚本中修改模型路径
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="/root/autodl-tmp/MODELS/Qwen/Qwen3.5-4B",
+    model_name="/root/autodl-tmp/MODELS/Qwen/Qwen3.5-9B",
     ...
 )
 ```
@@ -489,7 +429,7 @@ python extract_gsm8k_samples.py
 **新手入门流程**:
 ```bash
 # 1. 下载模型
-python download_qwen35_4b.py
+python download_qwen3.5_9b.py
 
 # 2. 提取小样本测试数据
 python extract_gsm8k_samples.py
